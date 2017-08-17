@@ -16,6 +16,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class Auth extends AppCompatActivity implements
         View.OnClickListener {
@@ -26,6 +28,8 @@ public class Auth extends AppCompatActivity implements
     private TextView mDetailTextView;
     private EditText mEmailField;
     private EditText mPasswordField;
+
+    private DatabaseReference mDatabase;
 
     // [START declare_auth]
     private FirebaseAuth mAuth;
@@ -195,13 +199,18 @@ public class Auth extends AppCompatActivity implements
     private void updateUI(FirebaseUser user) {
         //hideProgressDialog();
         if (user != null) {
-            //String name = user.getDisplayName();
-            System.out.println(user.getDisplayName());
+            //System.out.println(user.getDisplayName());
 
             //if user has no display name, account was just created, send them to add display name
             if (user.getDisplayName() == null){
                 Intent intent = new Intent(Auth.this, ManageUserDetails.class);
                 startActivity(intent);
+
+                //this is a new user, create an entry in the database for this user
+                User brandNewUser = new User(user.getUid());
+                mDatabase = FirebaseDatabase.getInstance().getReference();
+                mDatabase.child("user").child(user.getUid()).setValue(brandNewUser);
+                //newUserReference.setValue(user.getUid());
             }
             else{
                 //start an intent to open the home view

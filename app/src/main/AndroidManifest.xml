@@ -21,7 +21,10 @@
         </activity>
         <activity android:name=".Auth" />
         <activity android:name=".ManageUserDetails" />
-        <activity android:name=".ToDoItem"></activity>
+        <activity
+            android:name=".ToDoItem"
+            android:parentActivityName=".MainActivity"
+            ></activity>
     </application>
 
 </manifest>

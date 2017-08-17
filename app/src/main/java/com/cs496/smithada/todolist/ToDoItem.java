@@ -1,5 +1,6 @@
 package com.cs496.smithada.todolist;
 
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -11,20 +12,47 @@ import android.widget.Switch;
 import android.widget.ToggleButton;
 import android.view.MenuItem;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+
 import static com.cs496.smithada.todolist.R.styleable.MenuItem;
 
 public class ToDoItem extends AppCompatActivity {
 
-    private Switch repeatTask;
-    private EditText todoItem;
-    private ToggleButton monday;
-    private ToggleButton tuesday;
-    private ToggleButton wednesday;
-    private ToggleButton thursday;
-    private ToggleButton friday;
-    private ToggleButton saturday;
-    private ToggleButton sunday;
-    private Switch repeatWeekly;
+    //buttons and switches
+    private Switch repeatTaskSwitch;
+    private EditText todoItemTextField;
+    private ToggleButton mondayButton;
+    private ToggleButton tuesdayButton;
+    private ToggleButton wednesdayButton;
+    private ToggleButton thursdayButton;
+    private ToggleButton fridayButton;
+    private ToggleButton saturdayButton;
+    private ToggleButton sundayButton;
+    private Switch repeatWeeklySwitch;
+
+    //variables to hold user selected values
+    private String mToDoItem;
+    private boolean repeatTask = false;
+    private boolean monday = false;
+    private boolean tuesday = false;
+    private boolean wednesday = false;
+    private boolean thursday = false;
+    private boolean friday= false;
+    private boolean saturday = false;
+    private boolean sunday = false;
+    private boolean repeatWeekly = false;
+
+    private DatabaseReference mDatabase;
+    private FirebaseAuth mAuth;
+    private ValueEventListener mUserListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,75 +61,143 @@ public class ToDoItem extends AppCompatActivity {
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
 
+        //enable up action in toolbar
+        ActionBar ab = getSupportActionBar();
+        ab.setDisplayHomeAsUpEnabled(true);
+
         //get all the view options from the activity view
-        repeatTask = (Switch) findViewById(R.id.switch_repeat_days);
-        todoItem = (EditText) findViewById(R.id.todo_item);
-        monday = (ToggleButton) findViewById(R.id.toggle_mon);
-        tuesday = (ToggleButton) findViewById(R.id.toggle_tues);
-        wednesday = (ToggleButton) findViewById(R.id.toggle_wed);
-        thursday = (ToggleButton) findViewById(R.id.toggle_thurs);
-        friday = (ToggleButton) findViewById(R.id.toggle_fri);
-        saturday = (ToggleButton) findViewById(R.id.toggle_sat);
-        sunday = (ToggleButton) findViewById(R.id.toggle_sun);
-        repeatWeekly = (Switch) findViewById(R.id.switch_repeat_weekly);
+        repeatTaskSwitch = (Switch) findViewById(R.id.switch_repeat_days);
+        todoItemTextField = (EditText) findViewById(R.id.todo_item);
+        mondayButton = (ToggleButton) findViewById(R.id.toggle_mon);
+        tuesdayButton = (ToggleButton) findViewById(R.id.toggle_tues);
+        wednesdayButton = (ToggleButton) findViewById(R.id.toggle_wed);
+        thursdayButton = (ToggleButton) findViewById(R.id.toggle_thurs);
+        fridayButton = (ToggleButton) findViewById(R.id.toggle_fri);
+        saturdayButton = (ToggleButton) findViewById(R.id.toggle_sat);
+        sundayButton = (ToggleButton) findViewById(R.id.toggle_sun);
+        repeatWeeklySwitch = (Switch) findViewById(R.id.switch_repeat_weekly);
 
         //add a listener to the switch to toggle other options display
-        repeatTask.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+        repeatTaskSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
                 handleOptionsDisplay(isChecked);
 
                 if (isChecked == true){
-                    monday.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                    repeatTask = true;
+
+                    mondayButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                         @Override
-                        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                        public void onCheckedChanged(CompoundButton compoundButton, boolean monChecked) {
                             //if monday is checked
+                            if (monChecked == true){
+                                monday = true;
+                            }
+                            else{
+                                monday = false;
+                            }
                         }
                     });
-                    tuesday.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                    tuesdayButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                         @Override
-                        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                        public void onCheckedChanged(CompoundButton compoundButton, boolean tuesChecked) {
                             //if tuesday is checked
+                            if (tuesChecked == true){
+                                tuesday = true;
+                            }
+                            else{
+                                tuesday = false;
+                            }
                         }
                     });
-                    wednesday.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                    wednesdayButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                         @Override
-                        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                        public void onCheckedChanged(CompoundButton compoundButton, boolean wedChecked) {
                             //if wed is checked
+                            if (wedChecked == true){
+                                wednesday = true;
+                            }
+                            else{
+                                wednesday = false;
+                            }
                         }
                     });
-                    thursday.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                    thursdayButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                         @Override
-                        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                        public void onCheckedChanged(CompoundButton compoundButton, boolean thursChecked) {
                             //if thurs is checked
+                            if (thursChecked == true){
+                                thursday = true;
+                            }
+                            else{
+                                thursday = false;
+                            }
                         }
                     });
-                    friday.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                    fridayButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                         @Override
-                        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                        public void onCheckedChanged(CompoundButton compoundButton, boolean friChecked) {
                             //if fri is checked
+                            if (friChecked == true){
+                                friday = true;
+                            }
+                            else{
+                                friday = false;
+                            }
                         }
                     });
-                    saturday.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                    saturdayButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                         @Override
-                        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                        public void onCheckedChanged(CompoundButton compoundButton, boolean satChecked) {
                             //if sat is checked
+                            if (satChecked == true){
+                                saturday = true;
+                            }
+                            else{
+                                saturday = false;
+                            }
                         }
                     });
-                    sunday.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                    sundayButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                         @Override
-                        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                        public void onCheckedChanged(CompoundButton compoundButton, boolean sunChecked) {
                             //if sun is checked
+                            if (sunChecked == true){
+                                sunday = true;
+                            }
+                            else{
+                                sunday = false;
+                            }
                         }
                     });
-                    repeatWeekly.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                    repeatWeeklySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                         @Override
-                        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                        public void onCheckedChanged(CompoundButton compoundButton, boolean repeatWeeklyChecked) {
                             //if repeat weekly is checked
+                            if (repeatWeeklyChecked == true){
+                                repeatWeekly = true;
+                            }
+                            else{
+                                repeatWeekly = false;
+                            }
                         }
                     });
                 }
-            };
+                else{
+                    repeatTask = false;
+
+                    //in case user made selections, then de-selected repeatTaskSwitch, set all options to false
+                    monday = false;
+                    tuesday = false;
+                    wednesday = false;
+                    thursday = false;
+                    friday = false;
+                    saturday = false;
+                    sunday = false;
+                    repeatWeekly = false;
+                }
+            }
         });
+        //add listener to check button here to add items to the database
     }
 
     @Override
@@ -114,10 +210,95 @@ public class ToDoItem extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            // User chose the "Done" item, store entry in database...
             case R.id.done:
-                // User chose the "Settings" item, show the app settings UI...
-                return true;
 
+                // [START initialize_auth]
+                mAuth = FirebaseAuth.getInstance();
+                // [END initialize_auth]
+
+                final FirebaseUser currentUser = mAuth.getCurrentUser();
+                System.out.println(currentUser.getUid());
+
+                //Initialize database
+                mDatabase = FirebaseDatabase.getInstance().getReference().child("user").child(currentUser.getUid());
+
+                ValueEventListener userListener = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        User user = dataSnapshot.getValue(User.class);
+                        //System.out.println("userId " + user.userId);
+                        System.out.println("user returned" + user.userId);
+
+                        if (user.toDoItems == null){
+                            System.out.println("No items in user's list");
+                        }
+
+                        //get user entered string
+                        mToDoItem = todoItemTextField.getText().toString();
+
+                        //make new list object
+                        ListItem mListItem = new ListItem(mToDoItem, repeatTask, repeatWeekly, monday, tuesday, wednesday,
+                                thursday, friday, saturday, sunday);
+
+                        user.addItem(mListItem);
+
+                        //update user's list
+                        mDatabase.child("user").child(currentUser.getUid()).child("toDoItems").setValue(user.getToDoItems());
+                        finish();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        System.out.println("ERROR " + databaseError.toException());
+                    }
+                };
+                mDatabase.addValueEventListener(userListener);
+                // [END user listener]
+
+                // Keep copy of post listener so we can remove it when app stops
+                mUserListener = userListener;
+
+
+                /*mDatabase = FirebaseDatabase.getInstance().getReference();
+
+                Query matchingUserQuery = mDatabase.child("user").orderByChild("userId").equalTo(currentUser.getUid());
+                matchingUserQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+
+                        if (dataSnapshot.exists()){
+                            //User user = dataSnapshot.getValue(User.class);
+                            //System.out.println("user returned" + user);
+
+                            for (DataSnapshot issue : dataSnapshot.getChildren()){
+                                System.out.println("issues " + issue.getValue());
+                            }
+                        }
+                        else{
+                            System.out.println("Something is wrong");
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        System.out.println("ERROR " + databaseError.toException());
+                    }
+                });*/
+
+/*
+                //get user entered string
+                mToDoItem = todoItemTextField.getText().toString();
+
+                //make new list object
+                ListItem mListItem = new ListItem(mToDoItem, repeatTask, repeatWeekly, monday, tuesday, wednesday,
+                        thursday, friday, saturday, sunday);
+
+                mDatabase = FirebaseDatabase.getInstance().getReference();
+                mDatabase.child("todoitems").push().setValue(mListItem);
+                //return true;
+                finish();
+*/
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
@@ -149,6 +330,15 @@ public class ToDoItem extends AppCompatActivity {
             findViewById(R.id.toggle_sun).setVisibility(View.GONE);
             findViewById(R.id.text_repeat_weekly).setVisibility(View.GONE);
             findViewById(R.id.switch_repeat_weekly).setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+
+        if (mUserListener != null){
+            mDatabase.removeEventListener(mUserListener);
         }
     }
 }

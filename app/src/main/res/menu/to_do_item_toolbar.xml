@@ -6,7 +6,9 @@
 
     <item
         android:id="@+id/done"
+        android:icon="@drawable/ic_action_check"
         android:title="Done"
-        android:icon="@drawable/ic_done_black_24dp"
-        app:showAsAction="always"/>
+        app:showAsAction="always"
+        android:tint="@color/appBarIconTheme"
+        android:theme="@style/AppTheme.AppBarOverlay"/>
 </menu>

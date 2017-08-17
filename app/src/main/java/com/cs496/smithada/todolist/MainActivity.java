@@ -17,6 +17,11 @@ import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.ValueEventListener;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -24,6 +29,9 @@ public class MainActivity extends AppCompatActivity
     private TextView mUserTextView;
 
     private FirebaseAuth mAuth;
+    private DatabaseReference mDatabase;
+    //private DataSnapshot mDataSnapshot;
+    private ValueEventListener mUserListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +43,7 @@ public class MainActivity extends AppCompatActivity
         // [START initialize_auth]
         mAuth = FirebaseAuth.getInstance();
         // [END initialize_auth]
+
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -122,17 +131,48 @@ public class MainActivity extends AppCompatActivity
         // Check if user is signed in (non-null) and update UI accordingly.
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
+
         if (currentUser == null){
             //go do auth
             //start an intent to open the auth view
             Intent intent = new Intent(MainActivity.this, Auth.class);
             startActivity(intent);
         }
-        else{
+        else {
+            //Initialize database
+            mDatabase = FirebaseDatabase.getInstance().getReference().child("user").child(currentUser.getUid());
+
             mUserTextView = (TextView) findViewById(R.id.user);
             mUserTextView.setText(currentUser.getUid());
-            //updateUI(currentUser);
+
+            ValueEventListener userListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    User user = dataSnapshot.getValue(User.class);
+                    //System.out.println("userId " + user.userId);
+                    System.out.println("user " + user.userId);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    System.out.println("ERROR " + databaseError.toException());
+                }
+            };
+            mDatabase.addValueEventListener(userListener);
+            // [END user listener]
+
+            // Keep copy of post listener so we can remove it when app stops
+            mUserListener = userListener;
         }
     }
     // [END on_start_check_user]
+
+    @Override
+    public void onStop(){
+        super.onStop();
+
+        if (mUserListener != null){
+            mDatabase.removeEventListener(mUserListener);
+        }
+    }
 }

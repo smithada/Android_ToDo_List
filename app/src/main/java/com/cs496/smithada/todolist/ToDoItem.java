@@ -65,6 +65,10 @@ public class ToDoItem extends AppCompatActivity {
         ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
 
+        // [START initialize_auth]
+        mAuth = FirebaseAuth.getInstance();
+        // [END initialize_auth]
+
         //get all the view options from the activity view
         repeatTaskSwitch = (Switch) findViewById(R.id.switch_repeat_days);
         todoItemTextField = (EditText) findViewById(R.id.todo_item);
@@ -197,7 +201,6 @@ public class ToDoItem extends AppCompatActivity {
                 }
             }
         });
-        //add listener to check button here to add items to the database
     }
 
     @Override
@@ -213,9 +216,7 @@ public class ToDoItem extends AppCompatActivity {
             // User chose the "Done" item, store entry in database...
             case R.id.done:
 
-                // [START initialize_auth]
-                mAuth = FirebaseAuth.getInstance();
-                // [END initialize_auth]
+                //System.out.println("This is how many times the swtich is running");
 
                 final FirebaseUser currentUser = mAuth.getCurrentUser();
                 System.out.println(currentUser.getUid());
@@ -227,7 +228,7 @@ public class ToDoItem extends AppCompatActivity {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         User user = dataSnapshot.getValue(User.class);
-                        //System.out.println("userId " + user.userId);
+                        //System.out.println("This is how many times the even listener is running");
                         System.out.println("user returned" + user.userId);
 
                         if (user.toDoItems == null){
@@ -244,8 +245,8 @@ public class ToDoItem extends AppCompatActivity {
                         user.addItem(mListItem);
 
                         //update user's list
-                        mDatabase.child("user").child(currentUser.getUid()).child("toDoItems").setValue(user.getToDoItems());
-                        finish();
+                        mDatabase.child("toDoItems").setValue(user.getToDoItems());
+                        onStop();
                     }
 
                     @Override
@@ -259,46 +260,8 @@ public class ToDoItem extends AppCompatActivity {
                 // Keep copy of post listener so we can remove it when app stops
                 mUserListener = userListener;
 
+            return true;
 
-                /*mDatabase = FirebaseDatabase.getInstance().getReference();
-
-                Query matchingUserQuery = mDatabase.child("user").orderByChild("userId").equalTo(currentUser.getUid());
-                matchingUserQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-
-                        if (dataSnapshot.exists()){
-                            //User user = dataSnapshot.getValue(User.class);
-                            //System.out.println("user returned" + user);
-
-                            for (DataSnapshot issue : dataSnapshot.getChildren()){
-                                System.out.println("issues " + issue.getValue());
-                            }
-                        }
-                        else{
-                            System.out.println("Something is wrong");
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        System.out.println("ERROR " + databaseError.toException());
-                    }
-                });*/
-
-/*
-                //get user entered string
-                mToDoItem = todoItemTextField.getText().toString();
-
-                //make new list object
-                ListItem mListItem = new ListItem(mToDoItem, repeatTask, repeatWeekly, monday, tuesday, wednesday,
-                        thursday, friday, saturday, sunday);
-
-                mDatabase = FirebaseDatabase.getInstance().getReference();
-                mDatabase.child("todoitems").push().setValue(mListItem);
-                //return true;
-                finish();
-*/
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
@@ -340,5 +303,6 @@ public class ToDoItem extends AppCompatActivity {
         if (mUserListener != null){
             mDatabase.removeEventListener(mUserListener);
         }
+        finish();
     }
 }

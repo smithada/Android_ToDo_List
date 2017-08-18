@@ -1,5 +1,8 @@
 package com.cs496.smithada.todolist;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.provider.MediaStore;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -8,7 +11,9 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.view.MenuItem;
 
@@ -54,6 +59,8 @@ public class ToDoItem extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private ValueEventListener mUserListener;
 
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +75,7 @@ public class ToDoItem extends AppCompatActivity {
         // [START initialize_auth]
         mAuth = FirebaseAuth.getInstance();
         // [END initialize_auth]
+
 
         //get all the view options from the activity view
         repeatTaskSwitch = (Switch) findViewById(R.id.switch_repeat_days);
@@ -243,7 +251,8 @@ public class ToDoItem extends AppCompatActivity {
 
                         //update user's list in the database
                         mDatabase.child("toDoItems").setValue(user.getToDoItems());
-                        onStop();
+                        //onStop();
+                        performDoneAction();
                     }
 
                     @Override
@@ -300,6 +309,40 @@ public class ToDoItem extends AppCompatActivity {
         if (mUserListener != null){
             mDatabase.removeEventListener(mUserListener);
         }
+        //finish();
+    }
+
+    private void performDoneAction(){
+        if (mUserListener != null){
+            mDatabase.removeEventListener(mUserListener);
+        }
         finish();
+    }
+
+    public void onImageButtonClick(View view){
+        TextView imageButtonText = (TextView) findViewById(R.id.add_image);
+        imageButtonText.setText("image added");
+
+        //Now take a picture
+        dispatchTakePictureIntent();
+    }
+
+    private void dispatchTakePictureIntent(){
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        System.out.println("The image was captured");
+        ImageView image = (ImageView) findViewById(R.id.returned_image);
+
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            Bundle extras = data.getExtras();
+            Bitmap imageBitmap = (Bitmap) extras.get("data");
+            image.setImageBitmap(imageBitmap);
+        }
     }
 }

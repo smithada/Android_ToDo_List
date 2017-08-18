@@ -13,7 +13,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -22,6 +28,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.cs496.smithada.todolist.R.id.radioButton;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -43,7 +56,6 @@ public class MainActivity extends AppCompatActivity
         // [START initialize_auth]
         mAuth = FirebaseAuth.getInstance();
         // [END initialize_auth]
-
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -151,6 +163,36 @@ public class MainActivity extends AppCompatActivity
                     User user = dataSnapshot.getValue(User.class);
                     //System.out.println("userId " + user.userId);
                     System.out.println("user " + user.userId);
+                    System.out.println("User's List: " + user.toDoItems);
+                    System.out.println("typeOf user: " + user.getClass().getName());
+                    System.out.println("typeOf user.toDoItems.get(0) " + user.toDoItems.get(0).getClass().getName());
+
+                    System.out.println("typeof user.getToDoItems() " + user.getToDoItems().getClass().getName());
+                    System.out.println("Note text: " + user.toDoItems.get(0).toDoText);
+
+
+                    List<String> list = new ArrayList<String>();
+                    List<Map<String,String>> n = new ArrayList<Map<String,String>>();
+
+                    for (int i = 0; i < user.toDoItems.size(); i++){
+                        HashMap<String, String> m = new HashMap<String, String>();
+                        m.put("item", user.toDoItems.get(i).toDoText);
+                        n.add(m);
+                    }
+
+                    //display the data
+                    final SimpleAdapter postAdapter = new SimpleAdapter(
+                            MainActivity.this,
+                            n,
+                            R.layout.todo_list_item,
+                            new String[]{"item"},
+                            new int[]{radioButton});
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ((ListView)findViewById(R.id.todo_list)).setAdapter(postAdapter);
+                        }
+                    });
                 }
 
                 @Override
@@ -174,5 +216,16 @@ public class MainActivity extends AppCompatActivity
         if (mUserListener != null){
             mDatabase.removeEventListener(mUserListener);
         }
+    }
+
+    public void radioButtonClicked(View view){
+        // Is the button now checked?
+        boolean checked = ((RadioButton) view).isChecked();
+
+        System.out.println("Checked: " + ((RadioButton) view).isChecked());
+        /*if (((RadioButton) view).isChecked() == true){
+            ((RadioButton) view).setChecked(false);
+        }*/
+        System.out.println(((RadioButton) view).getText());
     }
 }

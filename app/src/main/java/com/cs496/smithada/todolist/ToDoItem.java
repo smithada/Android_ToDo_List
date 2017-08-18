@@ -219,7 +219,7 @@ public class ToDoItem extends AppCompatActivity {
                 //System.out.println("This is how many times the swtich is running");
 
                 final FirebaseUser currentUser = mAuth.getCurrentUser();
-                System.out.println(currentUser.getUid());
+                //System.out.println(currentUser.getUid());
 
                 //Initialize database
                 mDatabase = FirebaseDatabase.getInstance().getReference().child("user").child(currentUser.getUid());
@@ -231,10 +231,6 @@ public class ToDoItem extends AppCompatActivity {
                         //System.out.println("This is how many times the even listener is running");
                         System.out.println("user returned" + user.userId);
 
-                        if (user.toDoItems == null){
-                            System.out.println("No items in user's list");
-                        }
-
                         //get user entered string
                         mToDoItem = todoItemTextField.getText().toString();
 
@@ -242,9 +238,10 @@ public class ToDoItem extends AppCompatActivity {
                         ListItem mListItem = new ListItem(mToDoItem, repeatTask, repeatWeekly, monday, tuesday, wednesday,
                                 thursday, friday, saturday, sunday);
 
+                        //add new list item to the user object
                         user.addItem(mListItem);
 
-                        //update user's list
+                        //update user's list in the database
                         mDatabase.child("toDoItems").setValue(user.getToDoItems());
                         onStop();
                     }

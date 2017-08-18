@@ -11,7 +11,7 @@ import java.util.Objects;
 public class User {
 
     public String userId;
-    public List<Object> toDoItems = new ArrayList<Object>();
+    public List<ListItem> toDoItems = new ArrayList<ListItem>();
 
     public User() {
         //default constructor
@@ -30,7 +30,7 @@ public class User {
         return userId;
     }
     */
-    public List<Object> getToDoItems(){
+    public List<ListItem> getToDoItems(){
         return toDoItems;
     }
 }

@@ -2,7 +2,11 @@ package com.cs496.smithada.todolist;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -27,6 +31,14 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import static android.os.Environment.getExternalStoragePublicDirectory;
 import static com.cs496.smithada.todolist.R.styleable.MenuItem;
 
 public class ToDoItem extends AppCompatActivity {
@@ -60,6 +72,8 @@ public class ToDoItem extends AppCompatActivity {
     private ValueEventListener mUserListener;
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
+
+    private String mCurrentPhotoPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -330,19 +344,75 @@ public class ToDoItem extends AppCompatActivity {
     private void dispatchTakePictureIntent(){
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            // Create the File where the photo will go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            }
+            catch (IOException ex){
+                //Error occured while creating the File
+            }
+
+            if (photoFile != null){
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.cs496.smithada.todolist",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }
         }
     }
 
+    // Display the image thumbnail
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        System.out.println("The image was captured");
         ImageView image = (ImageView) findViewById(R.id.returned_image);
 
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            image.setImageBitmap(imageBitmap);
+        //get a bitmap and display
+        image.setImageBitmap(getbitpam(mCurrentPhotoPath));
+    }
+
+    //create the file for the image to be taken
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        //Also save this to the database for later
+        mCurrentPhotoPath = image.getAbsolutePath();
+        System.out.println("Photo file path: " + mCurrentPhotoPath);
+        return image;
+    }
+
+    //creates a bitmap of photo taken to be displayed as thumbnail
+    public Bitmap getbitpam(String path){
+        Bitmap imgthumBitmap=null;
+        try
+        {
+
+            final int THUMBNAIL_SIZE = 128;
+
+            FileInputStream fis = new FileInputStream(path);
+            imgthumBitmap = BitmapFactory.decodeStream(fis);
+
+            imgthumBitmap = Bitmap.createScaledBitmap(imgthumBitmap,
+                    THUMBNAIL_SIZE, THUMBNAIL_SIZE, false);
+
+            ByteArrayOutputStream bytearroutstream = new ByteArrayOutputStream();
+            imgthumBitmap.compress(Bitmap.CompressFormat.JPEG, 100,bytearroutstream);
+
+
         }
+        catch(Exception ex) {
+
+        }
+        return imgthumBitmap;
     }
 }

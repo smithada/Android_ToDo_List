@@ -13,13 +13,14 @@ public class ListItem {
     public boolean sat;
     public boolean sun;
     public boolean done;
+    public String photoPath;
 
     public ListItem(){
         //default constructor
     }
 
     public ListItem(String toDoText, boolean repeats, boolean repeatsWeekly, boolean mon, boolean tues,
-                    boolean wed, boolean thurs, boolean fri, boolean sat, boolean sun){
+                    boolean wed, boolean thurs, boolean fri, boolean sat, boolean sun, String photoPath){
         this.toDoText = toDoText;
         this.repeats = repeats;
         this.repeatsWeekly = repeatsWeekly;
@@ -30,6 +31,7 @@ public class ListItem {
         this.fri = fri;
         this.sat = sat;
         this.sun = sun;
+        this.photoPath = photoPath;
         this.done = false;
     }
 }

@@ -1,9 +1,13 @@
 package com.cs496.smithada.todolist;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,8 +17,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.SimpleAdapter;
@@ -29,6 +35,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,8 +51,8 @@ public class MainActivity extends AppCompatActivity
 
     private FirebaseAuth mAuth;
     private DatabaseReference mDatabase;
-    //private DataSnapshot mDataSnapshot;
     private ValueEventListener mUserListener;
+    private List<String> photoURIs = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,15 +169,15 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     User user = dataSnapshot.getValue(User.class);
+
                     //System.out.println("userId " + user.userId);
-                    System.out.println("user " + user.userId);
-                    System.out.println("User's List: " + user.toDoItems);
-                    System.out.println("typeOf user: " + user.getClass().getName());
-                    System.out.println("typeOf user.toDoItems.get(0) " + user.toDoItems.get(0).getClass().getName());
+                    //System.out.println("user " + user.userId);
+                    //System.out.println("User's List: " + user.toDoItems);
+                    //System.out.println("typeOf user: " + user.getClass().getName());
+                    //System.out.println("typeOf user.toDoItems.get(0) " + user.toDoItems.get(0).getClass().getName());
 
-                    System.out.println("typeof user.getToDoItems() " + user.getToDoItems().getClass().getName());
-                    System.out.println("Note text: " + user.toDoItems.get(0).toDoText);
-
+                    //System.out.println("typeof user.getToDoItems() " + user.getToDoItems().getClass().getName());
+                    //System.out.println("Note text: " + user.toDoItems.get(0).toDoText);
 
                     List<String> list = new ArrayList<String>();
                     List<Map<String,String>> n = new ArrayList<Map<String,String>>();
@@ -177,6 +185,15 @@ public class MainActivity extends AppCompatActivity
                     for (int i = 0; i < user.toDoItems.size(); i++){
                         HashMap<String, String> m = new HashMap<String, String>();
                         m.put("item", user.toDoItems.get(i).toDoText);
+
+                        if (user.toDoItems.get(i).photoPath != null){
+                            m.put("photo", user.toDoItems.get(i).photoPath);
+                            //photoURIs.add(user.toDoItems.get(i).photoPath);
+                        }
+                        else{
+                            m.put("photo", "@drawable/ic_menu_gallery");
+                            //photoURIs.add(null);
+                        }
                         n.add(m);
                     }
 
@@ -185,14 +202,15 @@ public class MainActivity extends AppCompatActivity
                             MainActivity.this,
                             n,
                             R.layout.todo_list_item,
-                            new String[]{"item"},
-                            new int[]{radioButton});
+                            new String[]{"item", "photo"},
+                            new int[]{radioButton, R.id.todo_item_image});
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             ((ListView)findViewById(R.id.todo_list)).setAdapter(postAdapter);
                         }
                     });
+
                 }
 
                 @Override
@@ -222,10 +240,34 @@ public class MainActivity extends AppCompatActivity
         // Is the button now checked?
         boolean checked = ((RadioButton) view).isChecked();
 
-        System.out.println("Checked: " + ((RadioButton) view).isChecked());
-        /*if (((RadioButton) view).isChecked() == true){
-            ((RadioButton) view).setChecked(false);
-        }*/
-        System.out.println(((RadioButton) view).getText());
+        if (((RadioButton) view).isChecked() == true){
+            ((RadioButton) view).setTextColor(getResources().getColor(R.color.itemSelected));
+        }
     }
+
+    //creates a bitmap of photo taken to be displayed as thumbnail
+    public Bitmap getbitpam(String path){
+        Bitmap imgthumBitmap=null;
+        try
+        {
+
+            final int THUMBNAIL_SIZE = 128;
+
+            FileInputStream fis = new FileInputStream(path);
+            imgthumBitmap = BitmapFactory.decodeStream(fis);
+
+            imgthumBitmap = Bitmap.createScaledBitmap(imgthumBitmap,
+                    THUMBNAIL_SIZE, THUMBNAIL_SIZE, false);
+
+            ByteArrayOutputStream bytearroutstream = new ByteArrayOutputStream();
+            imgthumBitmap.compress(Bitmap.CompressFormat.JPEG, 100,bytearroutstream);
+
+
+        }
+        catch(Exception ex) {
+
+        }
+        return imgthumBitmap;
+    }
+
 }

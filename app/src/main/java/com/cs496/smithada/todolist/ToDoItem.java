@@ -256,9 +256,11 @@ public class ToDoItem extends AppCompatActivity {
                         //get user entered string
                         mToDoItem = todoItemTextField.getText().toString();
 
+                        System.out.println("Test photo path should be null: " + mCurrentPhotoPath);
+
                         //make new list object
                         ListItem mListItem = new ListItem(mToDoItem, repeatTask, repeatWeekly, monday, tuesday, wednesday,
-                                thursday, friday, saturday, sunday);
+                                thursday, friday, saturday, sunday, mCurrentPhotoPath);
 
                         //add new list item to the user object
                         user.addItem(mListItem);
